@@ -1,0 +1,24 @@
+# Environment Variables (CRITICAL)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+venv/
+env/
+
+# Node / React
+node_modules/
+dist/
+dist-ssr
+*.local
+
+# Docker & Database
+.docker/
+postgres_data/
+
+# App Data
+uploads/
+.DS_Store

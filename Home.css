@@ -1,0 +1,41 @@
+.home-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.home-header {
+  margin-bottom: 40px;
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.action-card {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: #4f46e5;
+}
+
+.action-icon {
+  padding: 12px;
+  border-radius: 12px;
+  color: white;
+}
+
+.action-info h3 { font-weight: 700; font-size: 1.1rem; color: #111827; }
+.action-info p { color: #6b7280; font-size: 0.9rem; margin-top: 2px; flex: 1; }
