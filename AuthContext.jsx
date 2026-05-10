@@ -6,7 +6,7 @@ import api from './api';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [token, setToken] = useState(() => {
     const savedToken = localStorage.getItem('velora_token');
@@ -34,6 +34,8 @@ export const AuthProvider = ({ children }) => {
     if (token && !user) {
       logout();
     }
+    // Signal that initialization is complete
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {

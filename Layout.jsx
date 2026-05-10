@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutGrid, MapPin, MessageSquare, LogOut, HeartPulse, Home, Sun, Moon } from 'lucide-react';
+import { LayoutGrid, MapPin, MessageSquare, LogOut, HeartPulse, Home, Sun, Moon, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 const GalaxyStyles = () => (
@@ -133,6 +133,16 @@ const QuantumStyles = () => (
     .nav-item-entry { 
       animation: cascade-entry 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards; 
     }
+    @keyframes tooltip-appear {
+      from { opacity: 0; transform: translateX(-10px) scale(0.95); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    .nav-tooltip {
+      animation: tooltip-appear 0.2s ease-out forwards;
+    }
+    .sidebar-transition {
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
   `}</style>
 );
 
@@ -140,11 +150,24 @@ const Layout = () => {
   const { logout, theme, toggleTheme } = useAuth();
   const location = useLocation();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
     const handleMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+
     window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   const navItems = [
@@ -152,6 +175,7 @@ const Layout = () => {
     { name: 'AI Chat', path: '/triage', icon: <MessageSquare size={20} /> },
     { name: 'Medical Locker', path: '/locker', icon: <LayoutGrid size={20} /> },
     { name: 'Find Care', path: '/map', icon: <MapPin size={20} /> },
+    { name: 'BMI Tracker', path: '/bmi', icon: <Activity size={20} /> },
   ];
 
   return (
@@ -160,7 +184,7 @@ const Layout = () => {
       <GalaxyStyles />
       <ThemeBackground theme={theme} mousePos={mousePos} />
 
-      <aside className={`w-64 border-r flex flex-col z-20 relative overflow-hidden animate-[sidebar-slide_1s_ease-out]
+      <aside className={`${isCollapsed ? 'w-20' : 'w-64'} sidebar-transition border-r flex flex-col z-20 relative overflow-visible animate-[sidebar-slide_1s_ease-out]
         ${theme === 'dark' 
           ? 'bg-slate-950/40 backdrop-blur-lg border-white/10 border-l border-cyan-400/30' 
           : 'bg-white/50 backdrop-blur-md border-slate-200'}`}
@@ -168,30 +192,52 @@ const Layout = () => {
         {/* Animated Shimmer */}
         <div className="sidebar-shimmer-effect" />
 
-        <div className="p-8 flex items-center space-x-3">
-          <HeartPulse className="text-sky-400" size={32} />
-          <span className={`text-2xl font-black tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Velora AI</span>
+        {/* Floating Toggle Button */}
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3 top-20 bg-cyan-500 text-white rounded-full p-1 border border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.4)] z-50 hover:scale-110 transition-transform"
+        >
+          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
+
+        <div className={`p-8 flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
+          <HeartPulse className="text-sky-400 shrink-0" size={32} />
+          {!isCollapsed && (
+            <span className={`text-2xl font-black tracking-tighter whitespace-nowrap animate-fade-in-up ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+              Velora AI
+            </span>
+          )}
         </div>
         
-        <nav className="flex-1 px-4 space-y-1">
+        <nav className={`flex-1 ${isCollapsed ? 'px-2' : 'px-4'} space-y-1`}>
           {navItems.map((item, index) => (
             <Link
               key={item.name}
               to={item.path}
               style={{ animationDelay: `${index * 150}ms` }}
-              className={`nav-item-entry opacity-0 flex items-center space-x-3 p-3 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group
+              className={`nav-item-entry opacity-0 flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} p-3 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group relative
                 hover:scale-105 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/50
                 ${location.pathname === item.path
                   ? `bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 animate-[neon-pulse_3s_infinite]`
                   : theme === 'dark' ? 'text-slate-400 hover:bg-white/10' : 'text-slate-600 hover:bg-slate-900/5'
                 }`}
             >
-              <div className={`transition-colors duration-500 ${location.pathname === item.path ? 'text-cyan-400' : 'group-hover:text-cyan-400 text-slate-400'}`}>
+              <div className={`transition-colors shrink-0 duration-500 ${location.pathname === item.path ? 'text-cyan-400' : 'group-hover:text-cyan-400 text-slate-400'}`}>
                 {item.icon}
               </div>
-              <span className={`font-semibold transition-colors duration-500 ${location.pathname === item.path ? 'text-cyan-400' : ''}`}>
-                {item.name}
-              </span>
+              {!isCollapsed && (
+                <span className={`font-semibold whitespace-nowrap animate-fade-in-up transition-colors duration-500 ${location.pathname === item.path ? 'text-cyan-400' : ''}`}>
+                  {item.name}
+                </span>
+              )}
+
+              {/* Silicon Star Tooltip */}
+              <div className="absolute left-full ml-4 px-3 py-1.5 hidden group-hover:flex items-center bg-slate-900/90 backdrop-blur-xl border border-sky-500/30 rounded-lg pointer-events-none z-50 shadow-[0_0_20px_rgba(56,189,248,0.2)] nav-tooltip">
+                <div className="absolute -left-1 w-2 h-2 bg-slate-900 border-l border-t border-sky-500/30 rotate-45" />
+                <span className="text-[10px] font-black text-sky-400 uppercase tracking-[0.2em] whitespace-nowrap">
+                  {isCollapsed ? item.name : `Explore ${item.name}`}
+                </span>
+              </div>
             </Link>
           ))}
         </nav>
@@ -199,19 +245,19 @@ const Layout = () => {
         <div className={`p-4 border-t space-y-2 ${theme === 'dark' ? 'border-white/10' : 'border-slate-100'}`}>
           <button
             onClick={toggleTheme}
-            className={`flex items-center space-x-3 w-full p-3 rounded-xl transition-all duration-500 hover:bg-cyan-500/5 group ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} w-full p-3 rounded-xl transition-all duration-500 hover:bg-cyan-500/5 group ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}
           >
-            <div className={`transition-transform duration-500 group-hover:rotate-12 ${theme === 'light' ? 'animate-pulse text-amber-500' : ''}`}>
+            <div className={`transition-transform shrink-0 duration-500 group-hover:rotate-12 ${theme === 'light' ? 'animate-pulse text-amber-500' : ''}`}>
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </div>
-            <span className="font-semibold">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+            {!isCollapsed && <span className="font-semibold whitespace-nowrap animate-fade-in-up">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>}
           </button>
           <button
             onClick={logout}
-            className="flex items-center space-x-3 w-full p-3 text-red-400 hover:text-red-600 hover:bg-red-500/10 rounded-xl transition-all duration-500 group"
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} w-full p-3 text-red-400 hover:text-red-600 hover:bg-red-500/10 rounded-xl transition-all duration-500 group`}
           >
-            <LogOut size={20} className="transition-transform duration-500 group-hover:-translate-x-1" />
-            <span className="font-semibold">Logout</span>
+            <LogOut size={20} className="transition-transform shrink-0 duration-500 group-hover:-translate-x-1" />
+            {!isCollapsed && <span className="font-semibold whitespace-nowrap animate-fade-in-up">Logout</span>}
           </button>
         </div>
       </aside>

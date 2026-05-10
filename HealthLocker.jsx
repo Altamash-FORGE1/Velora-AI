@@ -17,7 +17,8 @@ const HealthLocker = () => {
   const fetchRecords = async () => {
     try {
       const res = await api.get('/locker');
-      setRecords(res.data.data.records);
+      const recordList = res?.data?.data?.records || [];
+      setRecords(recordList);
     } catch (err) {
       console.error("Failed to fetch records", err);
     } finally {
@@ -61,8 +62,25 @@ const HealthLocker = () => {
       const res = await api.get(`/locker/view/${filename}`, {
         responseType: 'blob'
       });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      window.open(url, '_blank');
+      
+      // Ensure we use the correct content type from the server
+      const contentType = res.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([res.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Use an anchor tag trick to bypass most popup blockers
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      // If it's a download rather than view, you could add:
+      // link.download = filename;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Revoke the URL after a delay to ensure the browser has time to load it
+      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
     } catch (err) {
       console.error("View failed", err);
     }
@@ -87,16 +105,16 @@ const HealthLocker = () => {
         {records.map((record) => (
           <div 
             key={record.id} 
-            className={`bento-item ${record.grid_size}`}>
+            className={`bento-item ${record.grid_size || 'w-full md:col-span-1'}`}>
             <div className="record-card">
               <div className="icon-wrapper">
-                {record.type.includes('pdf') ? <FileText size={40} className="text-red-500" /> : <ImageIcon size={40} className="text-blue-500" />}
+                {record.type?.includes('pdf') ? <FileText size={40} className="text-red-500" /> : <ImageIcon size={40} className="text-blue-500" />}
               </div>
               <div className="record-info">
                 <h3 className="record-name">{record.name}</h3>
                 <p className="record-date">{record.last_modified}</p>
-                <div className={`relevance-tag ${record.triage_relevance.toLowerCase()}`}>
-                  {record.triage_relevance} Relevance
+                <div className={`relevance-tag ${(record.triage_relevance || 'Low').toLowerCase()}`}>
+                  {record.triage_relevance || 'Standard'} Relevance
                 </div>
               </div>
               <div className="record-actions">

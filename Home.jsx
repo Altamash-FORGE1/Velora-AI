@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, LayoutGrid, ChevronRight, Activity, ShieldCheck, FileText, ExternalLink } from 'lucide-react';
+import { MessageSquare, LayoutGrid, ChevronRight, Activity, ShieldCheck, FileText, ExternalLink, Ruler } from 'lucide-react';
 import api from './api';
 import { useAuth } from './AuthContext';
 import './Home.css';
@@ -16,12 +16,12 @@ const Home = () => {
     const fetchStats = async () => {
       try {
         const res = await api.get('/locker');
-        const recordList = res.data.data.records || [];
+        const recordList = res?.data?.data?.records || [];
         setRecords(recordList.slice(0, 2));
 
         // Calculate Health Score based on actual usage
         const chatCount = parseInt(localStorage.getItem('velora_chat_count') || '0');
-        // Logic: Base 60 + Locker records (up to 20 pts) + Chat sessions (up to 20 pts)
+        // Logic: Base 60 + Locker records (up to 20 pts) + Chat sessions
         const calculatedScore = Math.min(60 + (recordList.length * 5) + (chatCount * 2), 100);
         setScore(calculatedScore);
 
@@ -30,7 +30,7 @@ const Home = () => {
         if (savedSummary) setLastSummary(savedSummary);
       } catch (err) {
         console.error("Health Score sync failed", err);
-        setScore(75); // Safe fallback
+        setScore(0); // Default score on failure
       }
     };
     fetchStats();
@@ -83,7 +83,7 @@ const Home = () => {
           {records.length > 0 ? records.map((file, i) => (
             <div key={i} className="flex items-center justify-between p-4 bg-[var(--bg-side)] rounded-xl border border-[var(--border)]">
               <div className="flex items-center gap-3">
-                <FileText size={20} className={file.type.includes('pdf') ? "text-red-400" : "text-sky-400"} />
+                <FileText size={20} className={file.type?.includes('pdf') ? "text-red-400" : "text-sky-400"} />
                 <div>
                   <div className="text-sm font-bold text-[var(--text-main)] truncate max-w-[150px]">{file.name}</div>
                   <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-tighter">Uploaded: {file.last_modified}</div>
@@ -97,6 +97,19 @@ const Home = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* BMI Tile */}
+      <div className={tileClass} onClick={() => navigate('/bmi')}>
+        <h3 className="font-bold text-sm uppercase tracking-wider flex items-center gap-2 text-sky-600 mb-4">
+          <Ruler size={18} className="text-sky-400" /> Biometric Index
+        </h3>
+        <p className={`text-sm font-medium leading-relaxed mb-8 line-clamp-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-800'}`}>
+          Monitor your Body Mass Index and health metrics with Silicon Star precision analytics.
+        </p>
+        <button className={`w-full py-4 border-2 rounded-2xl text-sm font-bold transition-colors ${theme === 'dark' ? 'border-sky-500/20 text-sky-400' : 'border-sky-200 text-sky-600'}`}>
+          Open Calculator
+        </button>
       </div>
     </div>
   );

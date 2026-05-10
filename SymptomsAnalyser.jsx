@@ -78,7 +78,8 @@ const SymptomsAnalyser = () => {
         accumulatedContent += chunk;
 
         // Update the last message in real-time
-        if (accumulatedContent.toLowerCase().match(/emergency|severe|911|hospital|urgent/)) {
+        const urgentPattern = /\b(emergency|severe|911|hospital|urgent|immediate)\b/i;
+        if (urgentPattern.test(accumulatedContent)) {
           setStatus('RED');
         }
 

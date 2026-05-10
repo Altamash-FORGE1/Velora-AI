@@ -7,6 +7,7 @@ import Home from './Home';
 import SymptomsAnalyser from './SymptomsAnalyser';
 import HealthLocker from './HealthLocker';
 import DoctorFinder from './DoctorFinder';
+import BMICalculator from './BMICalculator';
 import Login from './Login';
 
 const AppRoutes = () => {
@@ -40,6 +41,7 @@ const AppRoutes = () => {
           <Route path="triage" element={<SymptomsAnalyser />} />
           <Route path="locker" element={<HealthLocker />} />
           <Route path="map" element={<DoctorFinder />} />
+          <Route path="bmi" element={<BMICalculator />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
