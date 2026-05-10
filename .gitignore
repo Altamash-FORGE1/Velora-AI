@@ -1,24 +1,31 @@
-# Environment Variables (CRITICAL)
-.env
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
+# Dependencies
+node_modules/
+.venv/
 venv/
 env/
 
-# Node / React
-node_modules/
+# Build outputs
 dist/
-dist-ssr
-*.local
+build/
 
-# Docker & Database
-.docker/
-postgres_data/
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# App Data
-uploads/
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local uploads/database
+uploads/medical_records/*
+!uploads/medical_records/.gitkeep
+*.db
+*.sqlite3
+
+# System files
 .DS_Store
+Thumbs.db

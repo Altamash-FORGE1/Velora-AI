@@ -1,30 +1,58 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { useGoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
+import api from './api';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('velora_token'));
+  const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState(null);
+  const [token, setToken] = useState(() => {
+    const savedToken = localStorage.getItem('velora_token');
+    return (savedToken && savedToken !== "undefined" && savedToken !== "null" && savedToken !== "") ? savedToken : null;
+  });
 
-  useEffect(() => {
-    if (token) {
+  const [user, setUser] = useState(() => {
+    const savedToken = localStorage.getItem('velora_token');
+    if (savedToken && savedToken !== "undefined" && savedToken !== "null") {
       try {
-        // Decode JWT to extract user info (name, email, expiry)
-        const decoded = jwtDecode(token);
-        setUser(decoded);
+        return jwtDecode(savedToken);
       } catch (error) {
-        console.error("Invalid token", error);
-        logout();
+        console.error("Token recovery failed:", error);
+        localStorage.removeItem('velora_token');
+        return null;
       }
     }
-  }, [token]);
+    return null;
+  });
+
+  const [theme, setTheme] = useState(localStorage.getItem('velora_theme') || 'dark');
+
+  useEffect(() => {
+    // Validate session on mount
+    if (token && !user) {
+      logout();
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('velora_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   const login = (newToken) => {
-    localStorage.setItem('velora_token', newToken);
-    setToken(newToken);
+    try {
+      const decoded = jwtDecode(newToken);
+      localStorage.setItem('velora_token', newToken);
+      // Update both states together to avoid a render cycle where token exists but user doesn't
+      setUser(decoded);
+      setToken(newToken);
+    } catch (error) {
+      console.error("Login failed: invalid token", error);
+    }
   };
 
   const logout = () => {
@@ -35,20 +63,23 @@ export const AuthProvider = ({ children }) => {
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      setAuthError(null);
       try {
-        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/google`, {
+        const res = await api.post('/auth/google', {
           access_token: tokenResponse.access_token
         });
         login(res.data.data.token);
       } catch (err) {
-        console.error("Backend Auth Failed", err);
+        const errMsg = err.response?.data?.message || "Failed to sync with Velora servers. Please check your connection.";
+        setAuthError(errMsg);
+        console.error("Backend Auth Failed:", err);
       }
     },
     onError: error => console.log('Login Failed:', error)
   });
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, googleLogin }}>
+    <AuthContext.Provider value={{ user, token, login, logout, googleLogin, theme, toggleTheme, isLoading, authError }}>
       {children}
     </AuthContext.Provider>
   );

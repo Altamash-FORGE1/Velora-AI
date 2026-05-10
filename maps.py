@@ -1,6 +1,5 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from maps_service import fetch_nearby_clinics
-from response import api_response
 
 maps_bp = Blueprint('maps', __name__)
 
@@ -8,13 +7,10 @@ maps_bp = Blueprint('maps', __name__)
 def get_clinics():
     lat = request.args.get('lat')
     lng = request.args.get('lng')
-    priority = request.args.get('priority') # 'emergency' or None
+    priority = request.args.get('priority') # e.g., 'emergency'
     
     if not lat or not lng:
-        return api_response(status="error", message="Coordinates required", code=400)
+        return jsonify({"error": "Missing coordinates"}), 400
         
-    try:
-        clinics = fetch_nearby_clinics(lat, lng, priority)
-        return api_response(data={"clinics": clinics})
-    except Exception as e:
-        return api_response(status="error", message=str(e), code=500)
+    results = fetch_nearby_clinics(lat, lng, priority)
+    return jsonify(data=results)

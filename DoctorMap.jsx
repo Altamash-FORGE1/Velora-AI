@@ -1,99 +1,83 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
-import { useLocation } from 'react-router-dom';
-import api from './api';
-import { Phone, Clock, Star, MapPin } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Phone, Clock, Star, MapPin, Navigation, AlertCircle } from 'lucide-react';
 
 const mapContainerStyle = { width: '100%', height: 'calc(100vh - 120px)', borderRadius: '16px' };
-const defaultCenter = { lat: 40.7128, lng: -74.0060 }; // NYC fallback
+const MAP_CENTER = { lat: 12.9716, lng: 77.5946 }; // Cubbon Park, Bengaluru
+
+const mapStyles = [
+  { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#e9e9e9" }] }
+];
 
 const DoctorMap = () => {
   const { state } = useLocation();
-  const [center, setCenter] = useState(defaultCenter);
+  const [center, setCenter] = useState(MAP_CENTER);
   const [clinics, setClinics] = useState([]);
   const [selectedClinic, setSelectedClinic] = useState(null);
   
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_JS_API_KEY // For Map rendering
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_JS_API_KEY,
+    libraries: ['places']
   });
 
-  useEffect(() => {
-    // Get User Location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userPos = { lat: position.coords.latitude, lng: position.coords.longitude };
-          setCenter(userPos);
-          loadClinics(userPos);
-        },
-        () => loadClinics(defaultCenter)
-      );
-    }
-  }, []);
+  const onMapLoad = (map) => {
+    const service = new window.google.maps.places.PlacesService(map);
+    const request = {
+      location: MAP_CENTER,
+      radius: '5000',
+      type: ['hospital']
+    };
 
-  const loadClinics = async (pos) => {
-    try {
-      const res = await api.get('/clinics', {
-        params: { 
-          lat: pos.lat, 
-          lng: pos.lng, 
-          priority: state?.priority // RED triage status check
-        }
+    service.nearbySearch(request, (results, status) => {
+      if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+        setClinics(results);
+      }
+    });
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       });
-      setClinics(res.data.data.clinics);
-    } catch (err) {
-      console.error("Failed to load clinics", err);
     }
   };
 
-  if (!isLoaded) return <div>Loading Map...</div>;
+  if (!isLoaded) return <div className="p-8 text-center">Loading Maps...</div>;
 
   return (
-    <div className="map-wrapper">
+    <div className="p-6 h-full flex flex-col">
       {state?.priority === 'emergency' && (
-        <div className="emergency-notice">
-          <MapPin className="animate-pulse" />
-          Showing nearest Emergency & Urgent Care facilities based on your triage.
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-600 font-medium">
+          <AlertCircle size={20} />
+          <span>Emergency facilities nearby based on your symptoms.</span>
         </div>
       )}
-      
+
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
         center={center}
         zoom={13}
-        options={{ disableDefaultUI: true, zoomControl: true }}
+        onLoad={onMapLoad}
+        options={{ styles: mapStyles, disableDefaultUI: true, zoomControl: true }}
       >
         {clinics.map((clinic) => (
           <Marker
             key={clinic.place_id}
             position={clinic.geometry.location}
             onClick={() => setSelectedClinic(clinic)}
-            icon={state?.priority === 'emergency' ? "http://maps.google.com/mapfiles/ms/icons/red-dot.png" : undefined}
           />
         ))}
-
         {selectedClinic && (
           <InfoWindow
             position={selectedClinic.geometry.location}
             onCloseClick={() => setSelectedClinic(null)}
           >
-            <div className="info-window">
-              <h3 className="font-bold text-lg">{selectedClinic.name}</h3>
-              <div className="flex items-center gap-1 text-yellow-600 mb-2">
-                <Star size={14} fill="currentColor" />
-                <span>{selectedClinic.rating} ({selectedClinic.user_ratings_total})</span>
-              </div>
-              <p className="text-sm text-gray-600 mb-3">{selectedClinic.vicinity}</p>
-              
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock size={14} />
-                  <span className={selectedClinic.opening_hours?.open_now ? "text-green-600" : "text-red-600"}>
-                    {selectedClinic.opening_hours?.open_now ? "Open Now" : "Closed"}
-                  </span>
-                </div>
-              </div>
+            <div className="p-2">
+              <h3 className="font-bold text-gray-900">{selectedClinic.name}</h3>
+              <p className="text-xs text-gray-600">{selectedClinic.vicinity}</p>
             </div>
           </InfoWindow>
         )}
@@ -101,5 +85,4 @@ const DoctorMap = () => {
     </div>
   );
 };
-
 export default DoctorMap;

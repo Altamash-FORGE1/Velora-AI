@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, FileText, Image as ImageIcon, Trash2, ExternalLink, Loader2 } from 'lucide-react';
 import api, { BACKEND_URL } from './api';
+import { useAuth } from './AuthContext';
 import './HealthLocker.css';
 
 const HealthLocker = () => {
+  const { theme } = useAuth();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -54,16 +56,26 @@ const HealthLocker = () => {
     }
   };
 
-  const handleView = (filename) => {
-    window.open(`${BACKEND_URL}/api/locker/view/${filename}`, '_blank');
+  const handleView = async (filename) => {
+    try {
+      const res = await api.get(`/locker/view/${filename}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error("View failed", err);
+    }
   };
 
   if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin" /></div>;
 
   return (
-    <div className="locker-container">
-      <div className="locker-header">
-        <h1 className="text-2xl font-bold text-gray-900">Health Locker</h1>
+    <div className="locker-container min-h-full relative transition-colors duration-1000">
+      <div className="locker-header relative z-10 px-6 pt-6">
+        <h1 className={`text-4xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+          Health <span className="text-sky-500">Locker</span>
+        </h1>
         <label className="upload-btn">
           <Plus size={20} />
           <span>{uploading ? 'Processing...' : 'Upload Record'}</span>
@@ -71,9 +83,11 @@ const HealthLocker = () => {
         </label>
       </div>
 
-      <div className="bento-grid">
+      <div className="bento-grid relative z-10 p-6">
         {records.map((record) => (
-          <div key={record.id} className={`bento-item ${record.grid_size}`}>
+          <div 
+            key={record.id} 
+            className={`bento-item ${record.grid_size}`}>
             <div className="record-card">
               <div className="icon-wrapper">
                 {record.type.includes('pdf') ? <FileText size={40} className="text-red-500" /> : <ImageIcon size={40} className="text-blue-500" />}

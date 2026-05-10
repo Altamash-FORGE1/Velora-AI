@@ -1,0 +1,87 @@
+.bento-tile.athlete-scale-view {
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 1) 100%) !important;
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.05);
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.athlete-scale-view:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 40px -10px rgba(14, 165, 233, 0.3);
+  transform: translateY(-4px);
+}
+
+.athlete-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  background: #38bdf8;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #38bdf8;
+  animation: athlete-pulse 2s infinite;
+}
+
+@keyframes athlete-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.2); }
+}
+
+.telemetry-item .label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.telemetry-item .value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+.telemetry-item .unit {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #38bdf8;
+  margin-bottom: 0.4rem;
+}
+
+.neon-progress {
+  height: 4px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.neon-progress .fill {
+  height: 100%;
+  background: #38bdf8;
+  border-radius: 2px;
+  transition: width 1.5s ease-out;
+}
+
+@keyframes hologram-float {
+  0%, 100% { transform: translateY(0) rotate(12deg) scale(1); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0)); }
+  50% { transform: translateY(-15px) rotate(15deg) scale(1.05); filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.5)); }
+}
+
+.animate-hologram {
+  animation: hologram-float 6s ease-in-out infinite;
+}

@@ -1,3 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --sky-blue: #38bdf8;
+  --emerald: #10b981;
+}
+
+[data-theme='light'] {
+  --bg-main: #f8fafc;
+  --bg-side: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --text-main: #020617;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(15, 23, 42, 0.1);
+}
+
+[data-theme='dark'] {
+  --bg-main: #020617;
+  --bg-side: #0b1120;
+  --bg-card: rgba(30, 41, 59, 0.7);
+  --text-main: #f1f5f9;
+  --text-muted: #a1a1aa;
+  --border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Twinkle Effect Styles */
+.twinkle-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.theme-particle {
+  position: absolute;
+  pointer-events: auto;
+  transition: transform 0.4s ease-out;
+}
+
+@keyframes twinkle-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.8;
+  }
+}
+
+@keyframes leaf-drift {
+  0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% { transform: translateY(110vh) translateX(100px) rotate(360deg); opacity: 0; }
+}
+
+.skeleton-pulse {
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg-card) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

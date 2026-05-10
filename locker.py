@@ -1,47 +1,24 @@
-from flask import Blueprint, request, send_file
-import io
-from locker_service import (
-    save_medical_record, get_user_records, 
-    get_decrypted_file, delete_medical_record
-)
-from response import api_response
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from locker_service import get_user_records, save_medical_record
 
 locker_bp = Blueprint('locker', __name__)
 
-@locker_bp.route('/api/locker', methods=['GET'])
+@locker_bp.route('/api/locker/records', methods=['GET'])
+@jwt_required()
 def list_records():
-    # Mock user_id from context (would come from JWT)
-    user_id = "user_123"
+    user_id = get_jwt_identity()
     records = get_user_records(user_id)
-    return api_response(data={"records": records})
+    return jsonify(data={"records": records})
 
 @locker_bp.route('/api/locker/upload', methods=['POST'])
+@jwt_required()
 def upload_record():
+    user_id = get_jwt_identity()
     if 'file' not in request.files:
-        return api_response(status="error", message="No file provided", code=400)
-    
+        return jsonify({"message": "No file part"}), 400
     file = request.files['file']
-    try:
-        metadata = save_medical_record("user_123", file)
-        return api_response(data=metadata, message="File uploaded and encrypted successfully")
-    except Exception as e:
-        return api_response(status="error", message=str(e), code=500)
-
-@locker_bp.route('/api/locker/view/<filename>', methods=['GET'])
-def view_record(filename):
-    user_id = "user_123" # Mocked until JWT migration
-    decrypted_data = get_decrypted_file(user_id, filename)
-    if not decrypted_data:
-        return api_response(status="error", message="File not found", code=404)
-    
-    return send_file(
-        io.BytesIO(decrypted_data),
-        mimetype='application/pdf' if filename.endswith('.pdf') else 'image/jpeg'
-    )
-
-@locker_bp.route('/api/locker/<filename>', methods=['DELETE'])
-def delete_record(filename):
-    user_id = "user_123"
-    if delete_medical_record(user_id, filename):
-        return api_response(message="Record deleted successfully")
-    return api_response(status="error", message="File not found", code=404)
+    if file.filename == '':
+        return jsonify({"message": "No selected file"}), 400
+    metadata = save_medical_record(user_id, file)
+    return jsonify(data=metadata)
