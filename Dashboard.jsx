@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { MessageSquare, LayoutGrid, ChevronRight, Activity, ShieldCheck, FileText, ExternalLink, Ruler, Loader2 } from 'lucide-react';
 import api from './api';
 import { useAuth } from './AuthContext';
-import './Home.css';
+import './Dashboard.css'; // Updated CSS import
 
-const Home = () => {
+const Dashboard = () => {
   const { user, theme } = useAuth();
   const navigate = useNavigate();
   const [records, setRecords] = useState([]);
@@ -125,4 +125,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Dashboard;

@@ -1,9 +1,11 @@
 from flask import Blueprint, request, Response, jsonify
+from flask_jwt_extended import jwt_required
 from triage_service import analyze_symptoms
 
 triage_bp = Blueprint('triage', __name__)
 
 @triage_bp.route('/api/triage', methods=['POST'])
+@jwt_required()
 def triage():
     """
     Endpoint for AI Triage supporting both standard and streaming responses.

@@ -1,33 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, Bot, Loader2, Activity, Sparkles } from 'lucide-react';
+import { Send, User, Bot, Loader2, Activity, Sparkles, AlertCircle, MessageSquare } from 'lucide-react'; // Combined import
 import api, { BACKEND_URL } from './api';
 import { useAuth } from './AuthContext';
 import './SymptomsAnalyser.css';
 
 const SymptomsAnalyser = () => {
-  const { theme } = useAuth();
+  const { token, logout, theme } = useAuth();
   const [messages, setMessages] = useState([
     { role: 'assistant', content: "Hello! I am Velora AI. How can I help you today?" }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [status, setStatus] = useState('GREEN'); // GREEN, YELLOW, RED
-  const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
   const quickActions = ["Mild Pain", "Started Today", "Chronic", "Worsening"];
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -38,9 +29,8 @@ const SymptomsAnalyser = () => {
     
     setMessages(updatedMessages);
     setInput('');
-    inputRef.current?.focus();
     setIsTyping(true);
-
+    
     // Track activity for health score calculation
     const count = parseInt(localStorage.getItem('velora_chat_count') || '0');
     localStorage.setItem('velora_chat_count', (count + 1).toString());
@@ -48,33 +38,48 @@ const SymptomsAnalyser = () => {
     // Prepare placeholder for AI response
     setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
-    try {
-      const token = localStorage.getItem('velora_token');
+    // Ensure input is focused and scrolled to bottom after DOM updates
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
 
-      // fetch does not use axios interceptors, so we must manually add the JWT and Content-Type
+    try {
+      if (!token) {
+        setMessages(prev => [...prev.slice(0, -1), { role: 'assistant', content: "⚠️ You are not authorized. Please log in to chat." }]);
+        setIsTyping(false);
+        return;
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/triage`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ messages: updatedMessages, stream: true }),
+        body: JSON.stringify({
+          messages: updatedMessages,
+          stream: true
+        })
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.message || `Server error: ${response.status}`);
+      if (response.status === 401) {
+        logout();
+        throw new Error("Session expired. Redirecting to login...");
       }
 
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+      
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedContent = '';
 
       while (true) {
-        const { value, done } = await reader.read();
+        const { done, value } = await reader.read();
         if (done) break;
-        
-        const chunk = decoder.decode(value || new Uint8Array(), { stream: true });
+
+        const chunk = decoder.decode(value, { stream: true });
         accumulatedContent += chunk;
 
         // Update the last message in real-time
@@ -89,23 +94,16 @@ const SymptomsAnalyser = () => {
           return newMsgs;
         });
       }
-      
-      reader.releaseLock();
 
-      // Save the last response as a summary for the Home page
+      setIsTyping(false);
       localStorage.setItem('velora_last_summary', accumulatedContent);
 
     } catch (error) {
       console.error("Triage Error:", error);
       setMessages(prev => {
-        // Filter out the empty placeholder we added earlier
         const filtered = prev.filter(msg => msg.content !== '' || msg.role !== 'assistant');
-        return [
-          ...filtered,
-          { role: 'assistant', content: `⚠️ Error: ${error.message}. Please check your connection or try again later.` }
-        ];
+        return [...filtered, { role: 'assistant', content: `⚠️ Error: Failed to establish connection. ${error.message}` }];
       });
-    } finally {
       setIsTyping(false);
     }
   };
@@ -113,13 +111,16 @@ const SymptomsAnalyser = () => {
   return (
     <div className={`flex flex-col h-full max-w-5xl mx-auto relative z-10 p-4`}>
       <div 
-        className="flex-1 flex flex-col rounded-[2.5rem] overflow-hidden backdrop-blur-md bg-white/10 border border-white/20 shadow-2xl relative"
+        className={`flex-1 flex flex-col rounded-[2.5rem] overflow-hidden relative 
+          backdrop-blur-md border border-white/20 shadow-2xl
+          ${theme === 'dark' ? 'bg-white/10' : 'bg-white/10'}
+        `}
       >
         {/* Integrated Glass Header with Neon Glow */}
         <div className={`p-6 border-b ${theme === 'dark' ? 'border-white/10' : 'border-slate-200/50'} flex items-center justify-between`}>
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-sky-500/20 rounded-2xl">
-              <Sparkles className="text-sky-400" size={22} />
+              <MessageSquare className="text-sky-400" size={22} />
             </div>
             <div>
               <h2 className={`font-bold text-lg leading-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>Velora Assistant</h2>
@@ -140,7 +141,7 @@ const SymptomsAnalyser = () => {
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start animate-fade-in-up'}`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`max-w-[75%] flex items-end gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div className={`flex-shrink-0 w-9 h-9 rounded-2xl flex items-center justify-center transition-transform hover:rotate-12 ${
@@ -149,13 +150,13 @@ const SymptomsAnalyser = () => {
                     {msg.role === 'user' ? <User size={18} className="text-white" /> : <Bot size={18} className="text-sky-400" />}
                   </div>
                   
-                  <div className={`p-5 rounded-[1.5rem] relative transition-all duration-300 ${
+                  <div className={`p-4 md:p-5 rounded-2xl md:rounded-3xl relative transition-all duration-300 ${
                     msg.role === 'user'
                       ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-xl shadow-indigo-500/30 rounded-br-none'
-                      : `backdrop-blur-md border rounded-bl-none ${
+                      : `border rounded-bl-none ${
                           theme === 'dark' 
-                            ? 'bg-white/10 border-sky-400/30 text-white shadow-sky-500/5' 
-                            : 'bg-white/80 border-sky-200/50 text-slate-800 shadow-slate-200/50'
+                            ? 'bg-slate-900 border-white/10 text-white' 
+                            : 'bg-slate-100 border-slate-200 text-slate-800'
                         }`
                   }`}>
                     {msg.role === 'assistant' && msg.content === '' && isTyping ? (
@@ -171,18 +172,19 @@ const SymptomsAnalyser = () => {
                 </div>
             </div>
           ))}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Smart Actions & Input Area */}
         <div className="p-8 pt-0 space-y-6">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 overflow-x-auto no-scrollbar">
             {quickActions.map(action => (
               <button 
                 key={action} 
                 onClick={() => {
                   setInput(action);
-                  inputRef.current?.focus();
+                  requestAnimationFrame(() => {
+                    inputRef.current?.focus();
+                  });
                 }} 
                 className={`px-5 py-2 rounded-full text-xs font-bold border transition-all ${
                   theme === 'dark' 
@@ -197,10 +199,10 @@ const SymptomsAnalyser = () => {
 
           <form onSubmit={handleSend} className="relative group">
             <div className={`absolute -inset-1 bg-gradient-to-r from-sky-400 to-indigo-500 rounded-3xl blur opacity-0 group-focus-within:opacity-40 transition duration-700`} />
-            <div className={`relative flex items-center p-2 rounded-[2rem] backdrop-blur-3xl border transition-all duration-500 translate-y-[-4px] ${
+            <div className={`relative flex items-center p-2 rounded-[2rem] border transition-all duration-500 ${
               theme === 'dark' 
-                ? 'bg-black/40 border-white/10 group-focus-within:border-sky-500/50 shadow-2xl shadow-black/50' 
-                : 'bg-white/90 border-slate-200 group-focus-within:border-sky-400 shadow-xl shadow-slate-200/50'
+                ? 'bg-slate-900 border-white/10 group-focus-within:border-sky-500/50 shadow-2xl shadow-black/50' 
+                : 'bg-white border-slate-200 group-focus-within:border-sky-400 shadow-xl shadow-slate-200/50'
             }`}>
               <input 
                 ref={inputRef}
@@ -225,6 +227,15 @@ const SymptomsAnalyser = () => {
             </div>
           </form>
         </div>
+      </div>
+      {/* Branding and Small Decorative Button */}
+      <div className="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-50 pointer-events-none">
+        <div className="text-[10px] font-black text-slate-500 dark:text-slate-400 bg-white/5 backdrop-blur-sm px-2 py-0.5 rounded border border-white/10 tracking-widest uppercase">
+          AI FORGE
+        </div>
+        <button className="pointer-events-auto w-8 h-8 flex items-center justify-center bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 rounded-full transition-all shadow-lg active:scale-95">
+          <Sparkles size={14} />
+        </button>
       </div>
     </div>
   );

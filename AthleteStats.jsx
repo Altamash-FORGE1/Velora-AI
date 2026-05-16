@@ -16,8 +16,8 @@ const AthleteStats = () => {
   return (
     <div className="athlete-stats-page">
       {/* Header */}
-      <header className="stats-header flex justify-between items-center mb-10">
-        <div className="flex items-center gap-6">
+      <header className="stats-header flex flex-col md:flex-row justify-between items-center mb-6 md:mb-10 gap-4">
+        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
           <button 
             onClick={() => navigate('/')}
             className="p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white"
@@ -25,7 +25,7 @@ const AthleteStats = () => {
             <ArrowLeft size={24} />
           </button>
           <div>
-            <h1 className="text-3xl font-black text-white tracking-tight uppercase">Biometric Telemetry</h1>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase">Biometric Telemetry</h1>
             <p className="text-sky-400 text-xs font-bold tracking-[0.3em]">ATHLETE MODE : ACTIVE SENSOR LINK</p>
           </div>
         </div>
@@ -41,15 +41,15 @@ const AthleteStats = () => {
         {/* Primary Metrics */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           {biometricData.map((stat, i) => (
-            <div key={i} className="stats-card bento-tile holographic p-8">
-              <div className="flex justify-between items-start mb-6">
+            <div key={i} className="stats-card bento-tile holographic p-6 md:p-8">
+              <div className="flex justify-between items-start mb-4 md:mb-6">
                 <span className="text-[10px] font-black text-slate-500 tracking-widest uppercase">{stat.label}</span>
                 <span className={`text-[10px] font-black px-2 py-1 rounded-md bg-${stat.color}-500/10 text-${stat.color}-400 border border-${stat.color}-500/20`}>
                   {stat.status}
                 </span>
               </div>
               <div className="flex items-end gap-2">
-                <span className="text-5xl font-black text-white tracking-tighter">{stat.value}</span>
+                <span className="text-4xl md:text-5xl font-black text-white tracking-tighter">{stat.value}</span>
                 <span className="text-sm font-bold text-sky-400 mb-2 uppercase">{stat.unit}</span>
               </div>
               <div className="h-1.5 w-full bg-white/5 rounded-full mt-6 overflow-hidden">
@@ -61,7 +61,7 @@ const AthleteStats = () => {
 
         {/* Sidebar: Performance Insights */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="stats-card bento-tile holographic p-8 bg-gradient-to-br from-indigo-600/20 to-sky-600/20">
+          <div className="stats-card bento-tile holographic p-6 md:p-8 bg-gradient-to-br from-indigo-600/20 to-sky-600/20">
             <h3 className="text-xs font-black text-white tracking-[0.2em] mb-6 uppercase flex items-center gap-2">
               <TrendingUp size={16} className="text-sky-400" /> Training Load
             </h3>
@@ -82,7 +82,7 @@ const AthleteStats = () => {
             </div>
           </div>
 
-          <div className="stats-card bento-tile holographic p-8">
+          <div className="stats-card bento-tile holographic p-6 md:p-8">
             <h3 className="text-xs font-black text-white tracking-[0.2em] mb-6 uppercase flex items-center gap-2">
               <Award size={16} className="text-amber-400" /> Milestones
             </h3>
@@ -99,7 +99,7 @@ const AthleteStats = () => {
         </div>
 
         {/* Bottom Detailed Chart Placeholder */}
-        <div className="lg:col-span-3 stats-card bento-tile holographic p-8 min-h-[300px] flex flex-col justify-center items-center text-center">
+        <div className="lg:col-span-3 stats-card bento-tile holographic p-6 md:p-8 min-h-[250px] md:min-h-[300px] flex flex-col justify-center items-center text-center">
           <div className="p-6 bg-sky-500/10 rounded-full mb-4">
             <Activity size={48} className="text-sky-400 animate-pulse" />
           </div>

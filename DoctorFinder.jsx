@@ -117,14 +117,14 @@ const DoctorFinder = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 h-[calc(100vh-120px)] flex flex-col">
+    <div className="max-w-7xl mx-auto p-0 md:p-4 h-full flex flex-col">
       <div className={`flex-1 flex flex-col relative overflow-hidden rounded-[2.5rem] backdrop-blur-xl border shadow-2xl transition-all duration-500 ${
         theme === 'dark' ? 'bg-slate-900/40 border-white/10' : 'bg-white/80 border-slate-200'
       }`}>
         
         {/* Header Section */}
-        <div className="p-8 flex items-center justify-between border-b border-white/5">
-          <div className="flex items-center gap-4">
+        <div className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between border-b border-white/5 gap-4">
+          <div className="flex items-center gap-4 w-full md:w-auto">
             <div className="p-3 bg-rose-500/20 rounded-2xl">
               <Building2 className="text-rose-400" size={28} />
             </div>
@@ -136,8 +136,8 @@ const DoctorFinder = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <form onSubmit={handleSearch} className="relative group min-w-[300px]">
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <form onSubmit={handleSearch} className="relative group flex-1 md:min-w-[300px]">
               <input 
                 type="text" 
                 value={searchQuery}
@@ -161,7 +161,7 @@ const DoctorFinder = () => {
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Sidebar */}
-          <div className={`w-full lg:w-80 border-r overflow-y-auto custom-scrollbar ${
+          <div className={`w-full lg:w-80 border-r overflow-y-auto h-48 lg:h-auto custom-scrollbar ${
             theme === 'dark' ? 'border-white/5 bg-black/20' : 'border-slate-100 bg-slate-50/30'
           }`}>
             <div className="p-4 space-y-3">
@@ -200,6 +200,7 @@ const DoctorFinder = () => {
               background: #0b0e14;
               height: 100%;
               width: 100%;
+              touch-action: pan-x pan-y;
             }
             .leaflet-popup-content-wrapper {
               background: rgba(15, 23, 42, 0.9) !important;

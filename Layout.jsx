@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutGrid, MapPin, MessageSquare, LogOut, HeartPulse, Home, Sun, Moon, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutGrid, MapPin, MessageSquare, LogOut, HeartPulse, Home, Sun, Moon, Activity, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 const GalaxyStyles = () => (
@@ -151,10 +151,13 @@ const Layout = () => {
   const location = useLocation();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 1024);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     const handleMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
     const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
       if (window.innerWidth < 1024) {
         setIsCollapsed(true);
       } else {
@@ -171,7 +174,7 @@ const Layout = () => {
   }, []);
 
   const navItems = [
-    { name: 'Home', path: '/', icon: <Home size={20} /> },
+    { name: 'Dashboard', path: '/home', icon: <Home size={20} /> },
     { name: 'AI Chat', path: '/triage', icon: <MessageSquare size={20} /> },
     { name: 'Medical Locker', path: '/locker', icon: <LayoutGrid size={20} /> },
     { name: 'Find Care', path: '/map', icon: <MapPin size={20} /> },
@@ -179,12 +182,28 @@ const Layout = () => {
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden relative">
+    <div className="flex h-screen overflow-hidden relative flex-col md:flex-row">
       <QuantumStyles />
       <GalaxyStyles />
       <ThemeBackground theme={theme} mousePos={mousePos} />
 
-      <aside className={`${isCollapsed ? 'w-20' : 'w-64'} sidebar-transition border-r flex flex-col z-20 relative overflow-visible animate-[sidebar-slide_1s_ease-out]
+      {/* Mobile Top Header */}
+      {isMobile && (
+        <header className={`h-16 shrink-0 z-40 flex items-center justify-between px-6 border-b backdrop-blur-xl sticky top-0
+          ${theme === 'dark' ? 'bg-slate-950/80 border-white/10' : 'bg-white/80 border-slate-200'}`}>
+          <div className="flex items-center gap-3">
+              <HeartPulse className="text-sky-400" size={24} />
+            <span className={`text-xl font-black tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>VELORA</span>
+          </div>
+          <button onClick={toggleTheme} className="p-2.5 bg-sky-500/10 rounded-xl text-sky-400">
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </header>
+      )}
+
+      <aside className={`
+        ${isMobile ? 'hidden' : `${isCollapsed ? 'w-20' : 'w-64'} flex relative`}
+        sidebar-transition border-r flex-col overflow-visible animate-[sidebar-slide_1s_ease-out]
         ${theme === 'dark' 
           ? 'bg-slate-950/40 backdrop-blur-lg border-white/10 border-l border-cyan-400/30' 
           : 'bg-white/50 backdrop-blur-md border-slate-200'}`}
@@ -193,12 +212,14 @@ const Layout = () => {
         <div className="sidebar-shimmer-effect" />
 
         {/* Floating Toggle Button */}
-        <button 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-20 bg-cyan-500 text-white rounded-full p-1 border border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.4)] z-50 hover:scale-110 transition-transform"
-        >
-          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
+        {!isMobile && (
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-20 bg-cyan-500 text-white rounded-full p-1 border border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.4)] z-50 hover:scale-110 transition-transform"
+          >
+            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
+        )}
 
         <div className={`p-8 flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
           <HeartPulse className="text-sky-400 shrink-0" size={32} />
@@ -261,11 +282,36 @@ const Layout = () => {
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto relative z-10">
-        <div className="max-w-7xl mx-auto py-8 px-8 h-full">
+
+      <main className={`flex-1 overflow-auto relative z-10 ${isMobile ? 'pb-24' : ''}`}>
+        <div className={`${isMobile ? 'px-2 py-4' : 'px-8 py-8'} max-w-7xl mx-auto h-full`}>
           <Outlet />
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-black/80 backdrop-blur-lg border-t border-white/10 flex justify-around items-center px-4">
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`flex flex-col items-center justify-center min-w-[64px] min-h-[48px] transition-all duration-300 ${
+                location.pathname === item.path
+                  ? 'text-sky-400 drop-shadow-[0_0_12px_rgba(56,189,248,0.8)] scale-110'
+                  : 'text-slate-500'
+              }`}
+            >
+              <div className="p-1">
+                {React.cloneElement(item.icon, { size: 24 })}
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-tighter">
+                {item.name.split(' ')[0]}
+              </span>
+            </Link>
+          ))}
+        </nav>
+      )}
     </div>
   );
 };

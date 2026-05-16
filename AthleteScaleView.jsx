@@ -3,12 +3,12 @@ import { Activity, Zap, Layers } from 'lucide-react';
 import './AthleteScaleView.css';
 
 const AthleteScaleView = ({ onClick, className = "" }) => {
-  const tileClass = "bento-tile holographic p-10 group cursor-pointer hover:-translate-y-3 hover:scale-[1.02] hover:shadow-2xl transition-all duration-500 ease-out";
+  const tileClass = "bento-tile holographic p-6 md:p-10 group cursor-pointer hover:-translate-y-3 hover:scale-[1.02] hover:shadow-2xl transition-all duration-500 ease-out";
 
   return (
     <div className={`${tileClass} athlete-scale-view ${className}`} onClick={onClick}>
       {/* Top Interface: Mode Indicator */}
-      <div className="flex justify-between items-start mb-12">
+      <div className="flex justify-between items-start mb-8 md:mb-12">
         <div className="athlete-badge">
           <div className="pulse-dot"></div>
           <span className="text-[10px] font-black tracking-[0.3em] text-sky-400">ATHLETE MODE ACTIVE</span>

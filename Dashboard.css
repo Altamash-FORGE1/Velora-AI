@@ -1,0 +1,10 @@
+.bento-tile {
+  /* Add any specific styles for bento tiles here if needed */
+}
+
+.hero-tile {
+  grid-column: span 1;
+  grid-row: span 2;
+}
+
+/* Add any other styles that were in Home.css here */

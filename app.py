@@ -1,6 +1,7 @@
 import os
 import re
-from flask import Flask
+from datetime import timedelta
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
@@ -9,9 +10,37 @@ def create_app():
     
     # JWT Configuration
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'default_secret_for_dev')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24) # Extend token life for dev
     # Ensure JWT errors don't return HTML
     app.config['PROPAGATE_EXCEPTIONS'] = True
-    JWTManager(app)
+    jwt = JWTManager(app)
+
+    @jwt.unauthorized_loader
+    def unauthorized_response(callback):
+        print(f"DEBUG JWT: Unauthorized - {callback}")
+        return jsonify({
+            'ok': False,
+            'message': 'Missing Authorization Header',
+            'error': callback
+        }), 401
+
+    @jwt.invalid_token_loader
+    def invalid_token_response(callback):
+        print(f"DEBUG JWT: Invalid Token - {callback}")
+        return jsonify({
+            'ok': False,
+            'message': 'Invalid Token',
+            'error': callback
+        }), 401
+
+    @jwt.expired_token_loader
+    def expired_token_response(jwt_header, jwt_payload):
+        print(f"DEBUG JWT: Token Expired - {jwt_payload}")
+        return jsonify({
+            'ok': False,
+            'message': 'Token has expired',
+            'error': 'token_expired'
+        }), 401
     
     # Load allowed origins and strip any accidental whitespace
     raw_origins = os.environ.get("ALLOWED_ORIGINS", "")

@@ -66,6 +66,7 @@ export const AuthProvider = ({ children }) => {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setAuthError(null);
+      console.log("Google Auth Success, syncing with backend...");
       try {
         const res = await api.post('/auth/google', {
           access_token: tokenResponse.access_token
@@ -77,8 +78,18 @@ export const AuthProvider = ({ children }) => {
         console.error("Backend Auth Failed:", err);
       }
     },
-    onError: error => console.log('Login Failed:', error)
+    onError: error => {
+      console.error('Google Login Failed:', error);
+      setAuthError("Google Sign-In was cancelled or failed. Please try again.");
+    }
   });
+
+  // Log a warning if Client ID is missing to help with debugging
+  useEffect(() => {
+    if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+      console.warn("VITE_GOOGLE_CLIENT_ID is not defined in environment variables. Google Login will not function.");
+    }
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, googleLogin, theme, toggleTheme, isLoading, authError }}>

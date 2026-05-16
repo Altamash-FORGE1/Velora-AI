@@ -35,9 +35,7 @@ const HealthLocker = () => {
     formData.append('file', file);
 
     try {
-      const res = await api.post('/locker/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await api.post('/locker/upload', formData);
       // Real-time Sync: Update state immediately after upload
       setRecords(prev => [res.data.data, ...prev]);
     } catch (err) {
@@ -90,8 +88,8 @@ const HealthLocker = () => {
 
   return (
     <div className="locker-container min-h-full relative transition-colors duration-1000">
-      <div className="locker-header relative z-10 px-6 pt-6">
-        <h1 className={`text-4xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+      <div className="locker-header relative z-10 px-4 md:px-6 pt-4 md:pt-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 className={`text-3xl md:text-4xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
           Health <span className="text-sky-500">Locker</span>
         </h1>
         <label className="upload-btn">
@@ -101,11 +99,11 @@ const HealthLocker = () => {
         </label>
       </div>
 
-      <div className="bento-grid relative z-10 p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10 p-6">
         {records.map((record) => (
           <div 
             key={record.id} 
-            className={`bento-item ${record.grid_size || 'w-full md:col-span-1'}`}>
+            className={`bento-item w-full`}>
             <div className="record-card">
               <div className="icon-wrapper">
                 {record.type?.includes('pdf') ? <FileText size={40} className="text-red-500" /> : <ImageIcon size={40} className="text-blue-500" />}
